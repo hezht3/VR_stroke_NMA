@@ -16,6 +16,11 @@ require(dmetar)
 
 data <- read_csv("./INPUT/VR_stroke_NMA_data.csv")
 
+data <- data %>% 
+    mutate(chronic = ifelse(source == "Mekbib, 2021" | source == "Kim, 2018" |
+                                source == "Choi, 2014" | source == "Kong, 2016",
+                            "subacute", "chronic"))
+
 data <- escalc(measure = "SMD", vtype =  "UB",
        m1i = mean1, sd1i = sd1, n1i = n1,
        m2i = mean2, sd2i = sd2, n2i = n2, data = data)
@@ -34,7 +39,7 @@ data$order <- seq(nrow(data), 1, -1)
 vr_vs_control <- rma(data = data,
                      yi = yi,
                      vi = vi,
-                     method = "SJ",
+                     method = "DL",
                      slab = source,
                      digits = 2,
                      level = 95)
@@ -44,7 +49,7 @@ hmd_vs_control <- rma(data = data,
                       yi = yi,
                       vi = vi,
                       subset = (treat1 == "HMD"),
-                      method = "SJ",
+                      method = "DL",
                       slab = source,
                       digits = 2,
                       level = 95)
@@ -53,7 +58,7 @@ kinect_vs_control <- rma(data = data,
                          yi = yi,
                          vi = vi,
                          subset = (treat1 == "Kinect"),
-                         method = "SJ",
+                         method = "DL",
                          slab = source,
                          digits = 2,
                          level = 95)
@@ -62,7 +67,7 @@ wii_vs_control <- rma(data = data,
                       yi = yi,
                       vi = vi,
                       subset = (treat1 == "Wii"),
-                      method = "SJ",
+                      method = "DL",
                       slab = source,
                       digits = 2,
                       level = 95)
@@ -136,11 +141,11 @@ forest(netmeta.random.fit,
 
 # The Network Graph
 tiff("./OUTPUT/Figure 3. Network graph.tiff",
-     width = 1500, height = 1500, pointsize = 10, res = 300)
+     width = 3000, height = 2000, pointsize = 10, res = 300)
 netgraph(netmeta.random.fit, start = "random", iterate = TRUE, col.multiarm = "purple",
          points = TRUE, cex.points = 1.5, cex = 1, 
-         labels = c("Conventional rehabilitation", "Immersive virtual reality",
-                    "Microsoft Kinect", "Nintendo Wii"))
+         labels = c("Conventional rehabilitation", "Head mounted devices (immersive)",
+                    "Microsoft Kinect (non-immersive)", "Nintendo Wii (non-immersive)"))
 dev.off()
 
 # Direct and Indirect Evidence
@@ -155,7 +160,7 @@ netleague(netmeta.random.fit,
           digits = 2)      # round to two digits
 
 # Treatment ranking
-netrank(netmeta.fixed.fit, small.values = "good")
+netrank(netmeta.random.fit, small.values = "good")
 
 # Forest plot
 forest(netmeta.random.fit, 
